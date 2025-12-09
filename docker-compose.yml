@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  postgres-db_2025_gk:
+    image: postgres:16-alpine
+    container_name: postgres-db_2025_gk
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gk_user
+      POSTGRES_PASSWORD: gk_password_2025
+      POSTGRES_DB: computer_shop_gk
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_gk:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gk_user -d computer_shop_gk"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data_gk:
+    driver: local
