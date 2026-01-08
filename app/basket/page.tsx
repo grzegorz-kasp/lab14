@@ -10,6 +10,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import type { UserWithCartSummary } from '@/lib/actions/cart';
 
 type BasketPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -19,11 +20,13 @@ export default async function Basket({ searchParams }: BasketPageProps) {
   const session = await auth();
   const userId = session?.user?.id ?? '';
 
-  const [cart, total, users] = await Promise.all([
+  const [cart, total, usersRaw] = await Promise.all([
     userId ? getCartWithItems(userId) : Promise.resolve(null),
     userId ? getCartTotal(userId) : Promise.resolve(0),
     getAllUsersWithCarts(),
   ]);
+
+  const users: UserWithCartSummary[] = usersRaw;
 
   const transferStatus = typeof searchParams?.status === 'string' ? searchParams.status : undefined;
 

@@ -65,7 +65,15 @@ export async function getCartTotal(userId: string): Promise<number> {
 /**
  * Pobiera listę użytkowników wraz z informacją o ich koszykach
  */
-export async function getAllUsersWithCarts() {
+export type UserWithCartSummary = {
+  id: string;
+  email: string | null;
+  name: string | null;
+  cartItemCount: number;
+  cartQuantity: number;
+};
+
+export async function getAllUsersWithCarts(): Promise<UserWithCartSummary[]> {
   const users = await prisma.user.findMany({
     include: {
       cart: {
