@@ -2,8 +2,6 @@
 
 import prisma from '@/lib/prisma';
 
-type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
-
 /**
  * Pobiera koszyk użytkownika wraz z wszystkimi powiązanymi danymi
  * @param userId - ID użytkownika
@@ -37,9 +35,6 @@ export async function getCartWithItems(userId: string) {
   return cart;
 }
 
-export type CartWithItems = Awaited<ReturnType<typeof getCartWithItems>>;
-export type CartItem = NonNullable<CartWithItems>['items'][number];
-
 /**
  * Oblicza całkowitą wartość koszyka użytkownika
  * @param userId - ID użytkownika
@@ -58,7 +53,7 @@ export async function getCartTotal(userId: string): Promise<number> {
   }
 
   // Oblicz sumę używając reduce
-  const total = cart.items.reduce<number>((sum: number, item: { product: { price: number | string }; quantity: number }) => {
+  const total = cart.items.reduce((sum, item) => {
     const price = Number(item.product.price);
     const quantity = item.quantity;
     return sum + (price * quantity);
@@ -70,15 +65,7 @@ export async function getCartTotal(userId: string): Promise<number> {
 /**
  * Pobiera listę użytkowników wraz z informacją o ich koszykach
  */
-export type UserWithCartSummary = {
-  id: string;
-  email: string | null;
-  name: string | null;
-  cartItemCount: number;
-  cartQuantity: number;
-};
-
-export async function getAllUsersWithCarts(): Promise<UserWithCartSummary[]> {
+export async function getAllUsersWithCarts() {
   const users = await prisma.user.findMany({
     include: {
       cart: {
@@ -97,9 +84,9 @@ export async function getAllUsersWithCarts(): Promise<UserWithCartSummary[]> {
     },
   });
 
-  return users.map((user: { id: string; email: string | null; name: string | null; cart: { items: { quantity: number }[] } | null }) => {
+  return users.map((user) => {
     const items = user.cart?.items ?? [];
-    const totalQuantity = items.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
+    const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
     return {
       id: user.id,
       email: user.email ?? null,
@@ -124,7 +111,7 @@ export async function transferCart(fromUserId: string, toUserId: string) {
 
   let transferredQuantity = 0;
 
-  await prisma.$transaction(async (tx: TransactionClient) => {
+  await prisma.$transaction(async (tx) => {
     const fromCart = await tx.cart.findUnique({
       where: { userId: fromUserId },
       include: { items: true },

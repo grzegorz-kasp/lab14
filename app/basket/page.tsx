@@ -10,7 +10,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import type { UserWithCartSummary, CartItem } from '@/lib/actions/cart';
 
 type BasketPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -20,13 +19,11 @@ export default async function Basket({ searchParams }: BasketPageProps) {
   const session = await auth();
   const userId = session?.user?.id ?? '';
 
-  const [cart, total, usersRaw] = (await Promise.all([
+  const [cart, total, users] = await Promise.all([
     userId ? getCartWithItems(userId) : Promise.resolve(null),
     userId ? getCartTotal(userId) : Promise.resolve(0),
     getAllUsersWithCarts(),
-  ])) as [import('@/lib/actions/cart').CartWithItems | null, number, UserWithCartSummary[]];
-
-  const users: UserWithCartSummary[] = usersRaw;
+  ]);
 
   const transferStatus = typeof searchParams?.status === 'string' ? searchParams.status : undefined;
 
@@ -172,7 +169,7 @@ export default async function Basket({ searchParams }: BasketPageProps) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Lista produktów */}
             <div className="lg:col-span-2 space-y-4">
-              {cart.items.map((item: CartItem) => (
+              {cart.items.map((item) => (
                 <div
                   key={item.id}
                   className="bg-white rounded-lg shadow-md p-6 flex gap-6"
@@ -235,7 +232,7 @@ export default async function Basket({ searchParams }: BasketPageProps) {
                   <div className="flex justify-between text-gray-600">
                     <span>Liczba produktów:</span>
                     <span className="font-semibold">
-                      {cart.items.reduce((sum: number, item: CartItem) => sum + item.quantity, 0)} szt.
+                      {cart.items.reduce((sum, item) => sum + item.quantity, 0)} szt.
                     </span>
                   </div>
                   <div className="flex justify-between text-gray-600">
